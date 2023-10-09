@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  sls:
+    image: sls:v1.5.1
+    build:
+      context: .
+      dockerfile: docker/sls.dockerfile
+      args:
+        - SLS_PORT=${SLS_PORT}
+        - SLS_STATS_PORT=${SLS_STATS_PORT}
+    env_file:
+      - .env
+    stop_signal: SIGINT
+    restart: unless-stopped
+    ports:
+      - "${SLS_PORT}:${SLS_PORT}/udp"
+    volumes:
+      - ./data/sls/templates:/etc/sls/templates:ro
+      - ./data/sls/entrypoint/entrypoint.sh:/entrypoint.sh:ro
+
+  srtla:
+    image: srtla:v1.5.1.1
+    build:
+      context: .
+      dockerfile: docker/srtla.dockerfile
+      args:
+        - SRTLA_PORT=${SRTLA_PORT}
+        - SLS_PORT=${SLS_PORT}
+    env_file:
+      - .env
+    stop_signal: SIGKILL
+    restart: unless-stopped
+    ports:
+      - "${SRTLA_PORT}:${SRTLA_PORT}/udp"
+    depends_on:
+      - sls
+
+  nginx-rtmp:
+    image: nginx-rtmp:v1.25.2.1
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: docker/nginx_rtmp.dockerfile
+      args:
+        - NGINX_VERSION=1.25.2
+        - RTMP_MOD_VERSION=1.2.2
+    ports:
+      - "80:80"
+      - "443:443"
+      - "1935:1935"
+    restart: unless-stopped
+    volumes:
+      - ./data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/nginx/templates:/etc/nginx/templates:ro
+      - ./data/nginx/entrypoint/40-create-basic-auth.sh:/docker-entrypoint.d/40-create-basic-auth.sh
+      - ./data/nginx/entrypoint/50-create-local-ssl-cert.sh:/docker-entrypoint.d/50-create-local-ssl-cert.sh
+      - ./data/certbot:/var/www/certbot:ro
+      - ./data/letsencrypt:/etc/nginx/ssl:rw
+    depends_on:
+      - sls
+
+  certbot: &certbot
+    image: certbot/certbot:v2.6.0
+    env_file:
+      - .env
+    profiles: ["renew"]
+    volumes:
+      - ./data/certbot:/var/www/certbot:rw
+      - ./data/letsencrypt:/etc/letsencrypt:rw
+    command: "renew"
+
+  certbot-init:
+    <<: *certbot
+    ports:
+      - "80:80"
+    profiles: ["init"]
+    command:
+      - certonly
+      - --standalone
+      - --preferred-challenges
+      - http
+      - -w
+      - /var/www/certbot
+      - -d
+      - ${DOMAIN}
+      - --rsa-key-size
+      - "4096"
+      - --agree-tos
+      - -n
+      - --register-unsafely-without-email

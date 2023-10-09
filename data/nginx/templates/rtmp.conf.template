@@ -1,0 +1,10 @@
+server {
+    listen 1935;
+    chunk_size 4096;
+    allow publish all;
+
+    application ${RTMP_APP} {
+        live on;
+        record off;
+    }
+}

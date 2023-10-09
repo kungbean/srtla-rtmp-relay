@@ -49,7 +49,6 @@ Thumbs.db
 *.wmv
 
 *.env
-sls.conf
 data/certbot/*
 data/letsencrypt/*
 !data/certbot/.gitkeep
