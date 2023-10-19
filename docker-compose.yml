@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   sls:
-    image: sls:v1.5.1
+    image: kungbean/sls
     build:
       context: .
       dockerfile: docker/sls.dockerfile
@@ -20,7 +20,7 @@ services:
       - ./data/sls/entrypoint/entrypoint.sh:/entrypoint.sh:ro
 
   srtla:
-    image: srtla:v1.5.1.1
+    image: kungbean/srtla
     build:
       context: .
       dockerfile: docker/srtla.dockerfile
@@ -37,7 +37,7 @@ services:
       - sls
 
   nginx-rtmp:
-    image: nginx-rtmp:v1.25.2.1
+    image: kungbean/nginx-rtmp
     env_file:
       - .env
     build:
