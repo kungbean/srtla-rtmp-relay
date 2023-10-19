@@ -36,6 +36,14 @@ USERNAME=stats
 PASSWORD=mySecureStatsPassword
 ```
 
+Do one of the following
+```bash
+# Pull public images from Dockerhub
+docker compose pull
+# Build images locally. Use if you have any code changes
+docker compose build
+```
+
 Get SSL certificates for the Nginx stats endpoints. You should only need to do this once.
 ```bash
 docker compose up certbot-init
