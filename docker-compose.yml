@@ -73,14 +73,10 @@ services:
 
   certbot-init:
     <<: *certbot
-    ports:
-      - "80:80"
     profiles: ["init"]
     command:
       - certonly
-      - --standalone
-      - --preferred-challenges
-      - http
+      - --webroot
       - -w
       - /var/www/certbot
       - -d

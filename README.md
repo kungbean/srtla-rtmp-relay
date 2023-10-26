@@ -44,14 +44,16 @@ docker compose pull
 docker compose build
 ```
 
-Get SSL certificates for the Nginx stats endpoints. You should only need to do this once.
-```bash
-docker compose up certbot-init
-```
-
 Start all services in the background.
 ```bash
 docker compose up -d
+```
+
+Remove locally generated SSL certs, get LetsEncrypt SSL certs, and reload Nginx. Only do these once.
+```bash
+sudo rm -r ./data/letsencrypt/live/$DOMAIN
+docker compose run --rm certbot-init
+docker compose exec nginx-rtmp nginx -s reload
 ```
 
 It's worth checking the logs to see if all the services have started correctly.
@@ -61,31 +63,31 @@ docker compose logs -f
 
 Setup certbot to attempt renewing SSL certs every 6 hours in a cronjob. Make sure to change the `cd` to the location where you have the repo.
 ```bash
-crontab -l | { cat; echo "0 */6 * * * cd ~/srtla-rtmp-relay && docker compose run --rm certbot && docker compose exec nginx nginx -s reload"; } | crontab -
+crontab -l | { cat; echo "0 */6 * * * cd ~/srtla-rtmp-relay && docker compose run --rm certbot && docker compose exec nginx-rtmp nginx -s reload"; } | crontab -
 ```
 
 ## URLs
 
-Replace the `ALL_CAPS` values with those from your copy of the `.env` file.
-`SOME_ID_FOR_THIS_STREAM` can be replaced with whatever you want. You can relay multiple streams by setting different IDs for each.
+Replace the `$ALL_CAPS` values with those from your copy of the `.env` file.
+`$SOME_ID_FOR_THIS_STREAM` can be replaced with whatever you want. You can relay multiple streams by setting different IDs for each.
 
 The relay ingest urls will be available at the following routes. Use these to stream video to.
 * SRT:
-  * `url`: `srt://DOMAIN:SLS_PORT`
-  * `streamid`: `SLS_DOMAIN_PUBLISHER/SLS_APP_PUBLISHER/SOME_ID_FOR_THIS_STREAM`
+  * `url`: `srt://$DOMAIN:$SLS_PORT`
+  * `streamid`: `$SLS_DOMAIN_PUBLISHER/$SLS_APP_PUBLISHER/$SOME_ID_FOR_THIS_STREAM`
 * SRTLA:
-  * `url`: `srtla://DOMAIN:SRTLA_PORT`
-  * `streamid`: `SLS_DOMAIN_PUBLISHER/SLS_APP_PUBLISHER/SOME_ID_FOR_THIS_STREAM`
+  * `url`: `srtla://$DOMAIN:$SRTLA_PORT`
+  * `streamid`: `$SLS_DOMAIN_PUBLISHER/$SLS_APP_PUBLISHER/$SOME_ID_FOR_THIS_STREAM`
 * RTMP:
-  * `url`: `rtmp://DOMAIN/RTMP_APP/SOME_ID_FOR_THIS_STREAM`
+  * `url`: `rtmp://$DOMAIN/$RTMP_APP/$SOME_ID_FOR_THIS_STREAM`
 
 The relay playback urls will be available at the following routes. Use these to playback streams in your streaming software.
-* SRT/SRTLA: `srt://DOMAIN:SLS_PORT?streamid=SLS_DOMAIN_PLAYER/SLS_APP_PLAYER/SOME_ID_FOR_THIS_STREAM`
-* NGINX: `rtmp://DOMAIN/RTMP_APP/SOME_ID_FOR_THIS_STREAM`
+* SRT/SRTLA: `srt://$DOMAIN:$SLS_PORT?streamid=$SLS_DOMAIN_PLAYER/$SLS_APP_PLAYER/$SOME_ID_FOR_THIS_STREAM`
+* NGINX: `rtmp://$DOMAIN/$RTMP_APP/$SOME_ID_FOR_THIS_STREAM`
 
 The stats urls will be available at the following routes.
-* SRT/SRTLA: `https://USERNAME@PASSWORD:DOMAIN/SRT_STATS_ROUTE`
-* RTMP: `https://USERNAME@PASSWORD:DOMAIN/RTMP_STATS_ROUTE`
+* SRT/SRTLA: `https://$USERNAME@$PASSWORD:$DOMAIN/$SRT_STATS_ROUTE`
+* RTMP: `https://$USERNAME@$PASSWORD:$DOMAIN/$RTMP_STATS_ROUTE`
 
 ## Teardown
 
@@ -96,7 +98,7 @@ docker compose down
 
 If you want to completely uninstall this repo or destory the server, revoke your SSL certs. Also remember to disable the auto-renewal cronjob.
 ```bash
-docker compose run --rm certbot revoke --cert-name ${DOMAIN}
+docker compose run --rm certbot revoke --cert-name $DOMAIN
 ```
 
 # Credits
