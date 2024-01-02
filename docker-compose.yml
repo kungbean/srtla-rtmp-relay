@@ -69,7 +69,11 @@ services:
     volumes:
       - ./data/certbot:/var/www/certbot:rw
       - ./data/letsencrypt:/etc/letsencrypt:rw
-    command: "renew"
+    command:
+      - renew
+      - --webroot
+      - -w
+      - /var/www/certbot
 
   certbot-init:
     <<: *certbot

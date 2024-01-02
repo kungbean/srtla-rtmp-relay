@@ -46,7 +46,7 @@ docker compose build
 
 Start all services in the background.
 ```bash
-docker compose up -d
+docker compose up -d --wait
 ```
 
 Remove locally generated SSL certs, get LetsEncrypt SSL certs, and reload Nginx. Only do these once.
