@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   sls:
     image: kungbean/sls
@@ -78,7 +76,8 @@ services:
   certbot-init:
     <<: *certbot
     profiles: ["init"]
-    command:
+    entrypoint:
+      - certbot
       - certonly
       - --webroot
       - -w
@@ -90,3 +89,4 @@ services:
       - --agree-tos
       - -n
       - --register-unsafely-without-email
+    command: []
